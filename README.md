@@ -12,7 +12,7 @@ parallel-HAMSTER attributes the moisture sources for a precipitation event in a 
 Once the variations in the specific humidity of the parcels have been tracked, parallel-HAMSTER produces a two-dimensional field of moisture sources,  like the one shown below:
 
 <div align="center">
-  <img src="https://github.ugent.be/dinsuaco/parallel-HAMSTER/assets/14164/d824b12f-a262-4224-a50a-b716240f13c4" width="500"/>
+  <img src="https://github.com/user-attachments/assets/c59e8a29-7542-4607-a799-2d4f439220e6" width="500"/>
 </div>
 
 This field, which we call E2P, represents, for each cell in the grid, the amount of moisture evaporated in that cell that ends up contributing to the precipitation event of interest. In the case of this figure, the analyzed precipitation event is the one that caused the floods in Germany and Belgium in July 2021 (black box). parallel-HAMSTER can produce analogous fields for the contribution of evaporation to integrated water vapor (E2Q) and for the contribution of sensible heat to the temperature in the sink region (which we call HAD).
@@ -119,7 +119,7 @@ In the DATES section, the start_date and end_date of the period of interest are 
 parallel-HAMSTER is able to track moisture both backwards and forwards in time. What we have described so far is the backwards variant; that is, the sink region is predefined and the specific humidity of the air parcels that reach it during the rain event are tracked. Another option is to predefine the source and track the moisture that evaporates from it over the next 30 days. This is the forward version. In this case the output fields of parallel-HAMSTER are called PFE (precipitation from evaporation), QFE (integrated water vapor from evaporation) and HFS (sensible heat from source). Here is an example for rainfall from evaporation in North America in July 2021, i.e. PFE:
 
 <div align="center">
-  <img src="https://github.ugent.be/dinsuaco/parallel-HAMSTER/assets/14164/ddd99f6c-f377-4047-bc41-2f735be866d1" width="500"/>
+  <img src="https://github.com/user-attachments/assets/020671cf-585c-4c89-b2fa-f64939225a23" width="500"/>
 </div>
 
 The forward version can be found in the *parallel-HAMSTER_forward* directory.
@@ -130,14 +130,8 @@ The code is only adapted to ingest data in a specific format. We have already gi
 
 ## References
 
-***Dirmeyer, P. A., & Brubaker, K. L.*** Contrasting evaporative moisture sources during the drought of 1988 and the flood of 1993. J. Geophys. Res. D: Atmos., 104, 19383-19397 (1999).
-
 ***Sodemann, H., Schwierz, C., & Wernli, H.*** Interannual variability of Greenland winter precipitation sources: Lagrangian moisture diagnostic and North Atlantic Oscillation influence. J. Geophys. Res. D: Atmos., 113 (2008).
-
-***Cloux, S., Garaboa-Paz, D., Insua-Costa, D., Miguez-Macho, G., & Pérez-Muñuzuri, V.*** Extreme precipitation events in the Mediterranean area: contrasting two different models for moisture source identification. Hydrol. Earth Syst. Sci., 25, 6465-6477 (2021).
 
 ***Keune, J., Schumacher, D. L. & Miralles, D. G.*** A unified framework to estimate the origins of atmospheric moisture and heat using Lagrangian models. Geosci. Model Dev. 15, 1875–1898 (2022).
 
 ***Bakels, L., Tatsii, D., Tipka, A., Thompson, R., Dütsch, M., Blaschek, M., ... & Stohl, A.*** FLEXPART version 11: Improved accuracy, efficiency, and flexibility. Geosci. Model Dev., 17, 7595-7627 (2024).
-
-***Crespo-Otero, A., Insua-Costa, D., Hernández-García, E., López, C., & Míguez-Macho, G.*** Simple physics-based adjustments reconcile the results of Eulerian and Lagrangian techniques for moisture tracking. Earth Syst. Dynam. Discuss., in review, 1-25 (2024).
