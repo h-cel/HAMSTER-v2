@@ -116,7 +116,7 @@ In the DATES section, the start_date and end_date of the period of interest are 
 
 ## Backward and forward versions
 
-parallel-HAMSTER is able to track moisture both backwards and forwards in time. What we have described so far is the backwards variant; that is, the sink region is predefined and the specific humidity of the air parcels that reach it during the rain event are tracked. Another option is to predefine the source and track the moisture that evaporates from it over the next 30 days. This is the forward version. In this case the output fields of parallel-HAMSTER are called PFE (precipitation from evaporation), QFE (integrated water vapor from evaporation) and HFS (sensible heat from source). Here is an example for rainfall from evaporation in North America in July 2021, i.e. PFE:
+parallel-HAMSTER is able to track moisture both backwards and forwards in time. What we have described so far is the backwards variant, for which the sink region is predefined and the changes in specific humidity of the air parcels that reach it during the rain event are tracked. Another option is to predefine the source and track the moisture that evaporates from it over the next 30 days. This is the forward version. In this case the output fields of parallel-HAMSTER are called PFE (precipitation from evaporation), QFE (integrated water vapor from evaporation) and HFS (sensible heat from source). Here is an example for rainfall from evaporation in North America in July 2021, i.e. PFE:
 
 <div align="center">
   <img src="https://github.com/user-attachments/assets/020671cf-585c-4c89-b2fa-f64939225a23" width="500"/>
