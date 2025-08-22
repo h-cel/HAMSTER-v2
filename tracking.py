@@ -330,7 +330,7 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     E2Q = E2Q*inv_density/areas
     E2Q = np.nan_to_num(E2Q)#mm
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HAD = HAD*cp/dts/areas
+    HAD = HAD*cp/24/areas
     HAD = np.nan_to_num(HAD)#W/m2
     
   #3.9)
@@ -455,4 +455,5 @@ if __name__ == '__main__':
     c2 = time.time()
     print('RAM footprint for rank=0 '+str(tracemalloc.get_traced_memory())) 
     print('Total time '+str(c2-c1))
+
     tracemalloc.stop()
