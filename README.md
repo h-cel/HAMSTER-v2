@@ -1,4 +1,4 @@
-# parallel-HAMSTER
+# HAMSTER-v2.0
 Parallel version of the Heat And MoiSture Tracking framEwoRk
 
 ----
