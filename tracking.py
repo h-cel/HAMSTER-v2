@@ -330,7 +330,7 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     E2Q = E2Q*inv_density/areas
     E2Q = np.nan_to_num(E2Q)#mm
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    H2T = H2T*cp/dts/areas
+    H2T = H2T*cp/24/areas
     H2T = np.nan_to_num(H2T)#W/m2
     
   #3.9)
