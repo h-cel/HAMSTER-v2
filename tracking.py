@@ -253,21 +253,21 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     ind_heat_gain = (Delta_theta_new>0.)
     ind_heat_loss = (Delta_theta_new<0.)
 
-    #Define had from Delta_theta_new (they have te same structure)
-    had = np.zeros(Delta_theta_new.shape)
+    #Define h2t from Delta_theta_new (they have te same structure)
+    h2t = np.zeros(Delta_theta_new.shape)
 
     #Loop over times previous to arrival
-    for t in range(had.shape[0]-1):
-      #If gain, define had to be just Delta_theta_new
+    for t in range(h2t.shape[0]-1):
+      #If gain, define h2t to be just Delta_theta_new
       ind_gain=ind_heat_gain[t,:]
-      had[t,ind_gain] = Delta_theta_new[t,ind_gain]
+      h2t[t,ind_gain] = Delta_theta_new[t,ind_gain]
       #If loss, recompute previous contributions
       ind_loss=ind_heat_loss[t,:]
-      had[:t,ind_loss] = had[:t,ind_loss]*((theta_new[t,ind_loss]+Delta_theta_new[t,ind_loss])/theta_new[t,ind_loss])
+      h2t[:t,ind_loss] = h2t[:t,ind_loss]*((theta_new[t,ind_loss]+Delta_theta_new[t,ind_loss])/theta_new[t,ind_loss])
       #Avoid possible negative values or NaN values
-      had[had<0.]=0.
-      had[np.isinf(had)]=0.
-      had[np.isnan(had)]=0.
+      h2t[h2t<0.]=0.
+      h2t[np.isinf(h2t)]=0.
+      h2t[np.isnan(h2t)]=0.
       
     #Clean
     del theta_new,Delta_theta_new
@@ -303,12 +303,12 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
   del e2q
 
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    #Calculate HAD
-    HAD=ongrid(nx,ny,x_index,y_index,had,mass)
-    del had
+    #Calculate H2T
+    H2T=ongrid(nx,ny,x_index,y_index,h2t,mass)
+    del h2t
 
   #3.8)
-  #----------------------------------Convert grid fields (E2P,E2Q,HAD)--------------------------------
+  #----------------------------------Convert grid fields (E2P,E2Q,H2T)--------------------------------
   
   #Resample the tlevel dimension to daily data
   #Some considerations:
@@ -318,7 +318,7 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
   if json.loads(config['FLAGS']['save_e2q'].lower()):
     E2Q = np.stack([E2Q[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HAD = np.stack([HAD[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
+    H2T = np.stack([H2T[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
     
   #Change units
   inv_density = 1000./997.#This transforms kg of water to mm
@@ -330,8 +330,8 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     E2Q = E2Q*inv_density/areas
     E2Q = np.nan_to_num(E2Q)#mm
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HAD = HAD*cp/24/areas
-    HAD = np.nan_to_num(HAD)#W/m2
+    H2T = H2T*cp/24/areas
+    H2T = np.nan_to_num(H2T)#W/m2
     
   #3.9)
   #----------------------------------Gather all results and sum--------------------------------
@@ -349,8 +349,8 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     E2Qs = comm.gather(E2Q, root=0)
     del E2Q
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HADs = comm.gather(HAD, root=0)
-    del HAD
+    H2Ts = comm.gather(H2T, root=0)
+    del H2T
 
   #Sum all the results
   if rank == 0:
@@ -360,11 +360,11 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
     else:
       e2q_final = None
     if json.loads(config['FLAGS']['track_heat'].lower()):
-      had_final = np.sum(HADs, axis=0)
+      h2t_final = np.sum(H2Ts, axis=0)
     else:
-      had_final = None
+      h2t_final = None
 
-    return e2p_final, e2q_final, had_final
+    return e2p_final, e2q_final, h2t_final
   else:
     return None, None, None
     
@@ -419,7 +419,7 @@ if __name__ == '__main__':
       gc.collect()
 
     #Process data
-    E2P,E2Q,HAD = process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delta_theta)
+    E2P,E2Q,H2T = process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delta_theta)
         
     #6)
     # -----------------------------------Save to a netcdf file--------------------------------------
@@ -431,7 +431,7 @@ if __name__ == '__main__':
       if json.loads(config['FLAGS']['save_e2q'].lower()):
         final_e2q=xr.Dataset(data_vars=dict(E2Q=(["time","tlevel","lat","lon"],np.reshape(E2Q,(1,E2Q.shape[0],E2Q.shape[1],E2Q.shape[2])))),coords=dict(time=(["time"],[arrival_date-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
       if json.loads(config['FLAGS']['track_heat'].lower()):
-        final_had=xr.Dataset(data_vars=dict(HAD=(["time","tlevel","lat","lon"],np.reshape(HAD,(1,HAD.shape[0],HAD.shape[1],HAD.shape[2])))),coords=dict(time=(["time"],[arrival_date-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
+        final_h2t=xr.Dataset(data_vars=dict(H2T=(["time","tlevel","lat","lon"],np.reshape(H2T,(1,H2T.shape[0],H2T.shape[1],H2T.shape[2])))),coords=dict(time=(["time"],[arrival_date-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
 
       #Save
       os.system('mkdir -p '+path_data2+'/attribution')
@@ -439,7 +439,7 @@ if __name__ == '__main__':
       if json.loads(config['FLAGS']['save_e2q'].lower()):
         final_e2q.to_netcdf(path_data2+'/attribution/attribution_e2q_'+arrival_date.strftime('%Y%m%d%H%M%S')+'.nc')
       if json.loads(config['FLAGS']['track_heat'].lower()):
-        final_had.to_netcdf(path_data2+'/attribution/attribution_had_'+arrival_date.strftime('%Y%m%d%H%M%S')+'.nc')
+        final_h2t.to_netcdf(path_data2+'/attribution/attribution_h2t_'+arrival_date.strftime('%Y%m%d%H%M%S')+'.nc')
 
     #Go to the new date
     start_date=start_date+timedelta(hours=dt)
