@@ -323,14 +323,14 @@ def process_data_in_parallel(datesmidp,lonlat_sink,lon,lat,qv,Delta_q,theta,Delt
   #Change units
   inv_density = 1000./997.#This transforms kg of water to mm
   cp = 1005.7 
-  dts = dt*60.*60.
+  dts = 24*60.*60.
   E2P = E2P*inv_density/areas
   E2P = np.nan_to_num(E2P)#mm
   if json.loads(config['FLAGS']['save_e2q'].lower()):
     E2Q = E2Q*inv_density/areas
     E2Q = np.nan_to_num(E2Q)#mm
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    H2T = H2T*cp/24/areas
+    H2T = H2T*cp/dts/areas
     H2T = np.nan_to_num(H2T)#W/m2
     
   #3.9)
@@ -457,3 +457,4 @@ if __name__ == '__main__':
     print('Total time '+str(c2-c1))
 
     tracemalloc.stop()
+
