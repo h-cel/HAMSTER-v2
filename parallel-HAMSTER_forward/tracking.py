@@ -350,7 +350,7 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
   #Change units
   inv_density = 1000./997.#This transforms kg of water to mm
   cp = 1005.7 
-  dts = dt*60.*60.
+  dts = 24*60.*60.
   PFE = PFE*inv_density/areas
   PFE = np.nan_to_num(PFE)#mm
   if json.loads(config['FLAGS']['save_qfe'].lower()):
