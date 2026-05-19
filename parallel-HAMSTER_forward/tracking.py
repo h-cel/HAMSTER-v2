@@ -277,24 +277,24 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
     theta_new=theta_new[:,ind_starting_h]
     dt_first=dt_first[ind_starting_h]
 
-    #Define hfs from Delta_theta_new (they have the same structure)
-    hfs = np.zeros(Delta_theta_new.shape,dtype=np.float32)
+    #Define tfh from Delta_theta_new (they have the same structure)
+    tfh = np.zeros(Delta_theta_new.shape,dtype=np.float32)
 
-    #Initialise hfs and select only parcels that gain heat at the beginning
-    hfs[0,:] = dt_first
+    #Initialise tfh and select only parcels that gain heat at the beginning
+    tfh[0,:] = dt_first
 
     #Loop over after sensible heat gain
-    for t in range(1,hfs.shape[0]):
-      #If don't loss, define hfs to be equal to the previous time step
+    for t in range(1,tfh.shape[0]):
+      #If don't loss, define tfh to be equal to the previous time step
       ind_loss=ind_heat_loss[t,:]
       ind_gain=np.invert(ind_loss)
-      hfs[t,ind_gain] = hfs[t-1,ind_gain]
+      tfh[t,ind_gain] = tfh[t-1,ind_gain]
       #If loss, define qfe based on that of the previous step and the fraction of theta lost
-      hfs[t,ind_loss] = hfs[t-1,ind_loss]*((theta_new[t,ind_loss]+Delta_theta_new[t,ind_loss])/theta_new[t,ind_loss])
+      tfh[t,ind_loss] = tfh[t-1,ind_loss]*((theta_new[t,ind_loss]+Delta_theta_new[t,ind_loss])/theta_new[t,ind_loss])
       #Avoid possible negative values or NaN values
-      hfs[hfs<0.]=0.
-      hfs[np.isinf(hfs)]=0.
-      hfs[np.isnan(hfs)]=0.
+      tfh[tfh<0.]=0.
+      tfh[np.isinf(tfh)]=0.
+      tfh[np.isnan(tfh)]=0.
         
     #Clean
     del theta_new,Delta_theta_new
@@ -330,12 +330,12 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
   del qfe
 
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    #Calculate HFS
-    HFS=ongrid(nx,ny,x_index[:,ind_starting_h],y_index[:,ind_starting_h],hfs,mass)
-    del hfs
+    #Calculate TFH
+    TFH=ongrid(nx,ny,x_index[:,ind_starting_h],y_index[:,ind_starting_h],tfh,mass)
+    del tfh
 
   #3.9)
-  #----------------------------------Convert grid fields (PFE,QFE,HFS)--------------------------------
+  #----------------------------------Convert grid fields (PFE,QFE,TFH)--------------------------------
   
   #Resample the tlevel dimension to daily data
   #Some considerations:
@@ -345,7 +345,7 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
   if json.loads(config['FLAGS']['save_qfe'].lower()):
     QFE = np.stack([QFE[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HFS = np.stack([HFS[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
+    TFH = np.stack([TFH[datesmidp.date == d].sum(axis=0) for d in np.unique(datesmidp.date)], axis=0).astype(np.float32)
     
   #Change units
   inv_density = 1000./997.#This transforms kg of water to mm
@@ -357,8 +357,8 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
     QFE = QFE*inv_density/areas
     QFE = np.nan_to_num(QFE)#mm
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HFS = HFS*cp/dts/areas
-    HFS = np.nan_to_num(HFS)#W/m2
+    TFH = TFH*cp/dts/areas
+    TFH = np.nan_to_num(TFH)#W/m2
     
   #3.10)
   #----------------------------------Gather all results and sum--------------------------------
@@ -376,8 +376,8 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
     QFEs = comm.gather(QFE, root=0)
     del QFE
   if json.loads(config['FLAGS']['track_heat'].lower()):
-    HFSs = comm.gather(HFS, root=0)
-    del HFS
+    TFHs = comm.gather(TFH, root=0)
+    del TFH
 
   #Sum all the results
   if rank == 0:
@@ -387,11 +387,11 @@ def process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,De
     else:
       qfe_final = None
     if json.loads(config['FLAGS']['track_heat'].lower()):
-      hfs_final = np.sum(HFSs, axis=0)
+      tfh_final = np.sum(TFHs, axis=0)
     else:
-      hfs_final = None
+      tfh_final = None
 
-    return pfe_final, qfe_final, hfs_final
+    return pfe_final, qfe_final, tfh_final
   else:
     return None, None, None
     
@@ -446,7 +446,7 @@ if __name__ == '__main__':
       gc.collect()
 
     #Process data
-    PFE,QFE,HFS = process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,Delta_theta)
+    PFE,QFE,TFH = process_data_in_parallel(datesmidp,lonlat_source,lon,lat,qv,Delta_q,theta,Delta_theta)
         
     #6)
     # -----------------------------------Save to a netcdf file--------------------------------------
@@ -458,7 +458,7 @@ if __name__ == '__main__':
       if json.loads(config['FLAGS']['save_qfe'].lower()):
         final_qfe=xr.Dataset(data_vars=dict(QFE=(["time","tlevel","lat","lon"],np.reshape(QFE,(1,QFE.shape[0],QFE.shape[1],QFE.shape[2])))),coords=dict(time=(["time"],[after_starting-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
       if json.loads(config['FLAGS']['track_heat'].lower()):
-        final_hfs=xr.Dataset(data_vars=dict(HFS=(["time","tlevel","lat","lon"],np.reshape(HFS,(1,HFS.shape[0],HFS.shape[1],HFS.shape[2])))),coords=dict(time=(["time"],[after_starting-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
+        final_tfh=xr.Dataset(data_vars=dict(TFH=(["time","tlevel","lat","lon"],np.reshape(TFH,(1,TFH.shape[0],TFH.shape[1],TFH.shape[2])))),coords=dict(time=(["time"],[after_starting-timedelta(hours=dt/2)]),tlevel=(["tlevel"],datesmidp.normalize().unique()),lat=(["lat"],grid_lat[:,0]),lon=(["lon"],grid_lon[0,:]))).astype(np.float32)
 
       #Save
       os.system('mkdir -p '+path_data2+'/attribution')
@@ -466,7 +466,7 @@ if __name__ == '__main__':
       if json.loads(config['FLAGS']['save_qfe'].lower()):
         final_qfe.to_netcdf(path_data2+'/attribution/attribution_qfe_'+after_starting.strftime('%Y%m%d%H%M%S')+'.nc')
       if json.loads(config['FLAGS']['track_heat'].lower()):
-        final_hfs.to_netcdf(path_data2+'/attribution/attribution_hfs_'+after_starting.strftime('%Y%m%d%H%M%S')+'.nc')
+        final_tfh.to_netcdf(path_data2+'/attribution/attribution_tfh_'+after_starting.strftime('%Y%m%d%H%M%S')+'.nc')
 
     #Go to the new date
     start_date=start_date+timedelta(hours=dt)
