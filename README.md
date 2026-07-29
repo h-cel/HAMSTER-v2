@@ -128,6 +128,13 @@ The forward version can be found in the *parallel-HAMSTER_forward* directory.
 
 The code is only adapted to ingest data in a specific format. We have already given an example; if you want to use the outputs of a Lagrangian model other than FLEXPART v11, the code has to be adapted. Likewise, the target regions must have a specific format in terms of coordinates and variable name (*mask*). An example of a sink region can be seen in the *example* folder and an example of a source region in *parallel-HAMSTER_forward/example*. On the other hand, the code is only adapted to use observational data from ERA5. If you want to use another dataset for bias correction, the *preprocessing.py* script has to be modified accordingly. The time step for the observations must be the one set in *namelist.input*, which means that if dt=3, the observations must be 3-hourly. Furthermore, the dates in the observations must be centered (e.g. evaporation from 00 to 03 UTC has a date of 01:30 UTC). This can be done by modifying the ERA5 files using, for instance, the CDO settaxis function, or by directly  modifying *preprocessing.py*. In the output of *tracking.py*, the filename will contain the date of the end of the period, but the timestamp in the file is also centered. For example, the moisture source for rainfall between 00 and 03 UTC on June 1, 2015 will be saved as attribution_e2p_20150601030000.nc, but in reality the time variable will be set to 01:30 UTC. In short, it would be advisable to be familiar with the code and not just with its execution. This limits the chances of making mistakes that go unnoticed.
 
+## Referencing
+If you use HAMSTER v2, please cite:
+
+***Insua-Costa, D., Deman, V. M. H., and Miralles, D. G.*** Heat And MoiSture Tracking framEwoRk version 2.0 (HAMSTER v2) (2.0.0), Zenodo, https://doi.org/10.5281/zenodo.20181215, 2026.
+
+***Deman, V. M. H., Insua-Costa, D., Keune, J., Koppa, A., and Miralles, D. G.*** A four-decade global Lagrangian air-parcel trajectory dataset for atmospheric moisture and heat analysis. Earth Syst. Sci. Data, 18, 4593–4615 (2026).
+
 ## References
 
 ***Sodemann, H., Schwierz, C., & Wernli, H.*** Interannual variability of Greenland winter precipitation sources: Lagrangian moisture diagnostic and North Atlantic Oscillation influence. J. Geophys. Res. D: Atmos., 113 (2008).
